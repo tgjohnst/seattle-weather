@@ -41,7 +41,7 @@ getCleanDataForDate <- function(stationCode, this_date) {
 Setup date ranges to search
 ```{r}
 loc <- 'KSEA'
-start_date <- '2016-11-01'
+start_date <- '2016-05-01'
 end_date <- '2017-02-01'
 all_dates <- seq.Date(from=as.Date(start_date),to=as.Date(end_date),by = 1)
 ```
@@ -52,7 +52,7 @@ all_measures <- getCleanDataForDate(loc, all_dates[1])
 for (i in 2:length(all_dates)) {
   this_date <- all_dates[i]
   this_data <- getCleanDataForDate(loc, this_date)
-  print(names(this_data))
+  print(this_date)
   if (!(is.na(this_data))) {
     all_measures <- rbind(all_measures, this_data)
   }
@@ -61,16 +61,26 @@ for (i in 2:length(all_dates)) {
 
 What kinds of conditions do we have
 ```{r}
-table(all_measures$conditions)
+table(all_measures$Conditions)
 
 #What would we call sunny?
-sunny <- c('Clear', 'Partly Cloudy', 'Scattered Clouds')
-
+sunny <- c('Clear', 'Scattered Clouds')
+sunnyish <- c('Partly Cloudy')
+rainy <- c('Rain', 'Light Rain', 'Light Drizzle', 'Heavy Rain')
+snowy <- c('Snow', 'Light Snow')
 # Only take the first measurement per hour
 # TODO
+all_measures$hour <- sapply(all_measures$DateUTC.br..., hour)
 cond_by_hour <- table(all_measures$Conditions, all_measures$hour)
 meas_per_hour <- colSums(cond_by_hour)
 norm_cond_by_hour <- t(apply(cond_by_hour, 1, function(x) x/meas_per_hour))
+norm_cond_by_hour <- norm_cond_by_hour[c(1,3,2,4:nrow(norm_cond_by_hour)),]
 colorVec <- ifelse(rownames(norm_cond_by_hour) %in% sunny, 'yellow','grey50')
+colorVec <- ifelse(rownames(norm_cond_by_hour) %in% sunnyish, 'grey80',colorVec)
+colorVec <- ifelse(rownames(norm_cond_by_hour) %in% rainy, 'dodgerblue3',colorVec)
+colorVec <- ifelse(rownames(norm_cond_by_hour) %in% snowy, 'white',colorVec)
 barplot(norm_cond_by_hour, col=colorVec)
 ```
+
+
+
