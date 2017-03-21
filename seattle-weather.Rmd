@@ -13,18 +13,26 @@ startDate <- '2015-01-01'
 endDate <- '2017-01-01'
 allDates <- seq.Date(from=as.Date(startDate),to=as.Date(endDate),by = 1)
 dates_df <- data.frame(date = allDates,
-                 year = as.numeric(format(allDates, format = "%Y")),
-                 month = as.numeric(format(allDates, format = "%m")),
-                 day = as.numeric(format(allDates, format = "%d")))
+                 )
 
 
 https://www.wunderground.com/history/airport/KSEA/2016/6/11/DailyHistory.html?format=1
 ```
 
 ```{r}
-getDataForDate <- function(stationCode, date) {
-  
+getCleanDataForDate <- function(stationCode, date) {
+  year <- as.numeric(format(allDates, format = "%Y"))
+  month <- as.numeric(format(allDates, format = "%m"))
+  day <- as.numeric(format(allDates, format = "%d"))
+  url <- paste0('https://www.wunderground.com/history/airport/',
+                stationCode, '/',
+                year, '/',
+                month, '/',
+                day, '/',
+                'DailyHistory.html?format=1')
+  downloaded_data <- read.csv(url)
+  downloaded_data[,'DateUTC.br...'] <- gsub('<br />', '',
+                                            as.character(downloaded_data[,'DateUTC.br...']))
 }
 ```
-
 
