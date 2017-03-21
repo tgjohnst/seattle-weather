@@ -7,32 +7,32 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Setup date ranges to search
+Load required libraries
 ```{r}
-startDate <- '2015-01-01'
-endDate <- '2017-01-01'
-allDates <- seq.Date(from=as.Date(startDate),to=as.Date(endDate),by = 1)
-dates_df <- data.frame(date = allDates,
-                 )
-
-
-https://www.wunderground.com/history/airport/KSEA/2016/6/11/DailyHistory.html?format=1
+library(lubridate)
 ```
 
+Setup date ranges to search
 ```{r}
-getCleanDataForDate <- function(stationCode, date) {
-  year <- as.numeric(format(allDates, format = "%Y"))
-  month <- as.numeric(format(allDates, format = "%m"))
-  day <- as.numeric(format(allDates, format = "%d"))
+
+start_date <- '2015-01-01'
+end_date <- '2017-01-01'
+all_dates <- seq.Date(from=as.Date(startDate),to=as.Date(endDate),by = 1)
+```
+
+Function for retrieving available weather data
+```{r}
+getCleanDataForDate <- function(stationCode, this_date) {
   url <- paste0('https://www.wunderground.com/history/airport/',
                 stationCode, '/',
-                year, '/',
-                month, '/',
-                day, '/',
+                year(this_date), '/',
+                month(this_date), '/',
+                day(this_date), '/',
                 'DailyHistory.html?format=1')
   downloaded_data <- read.csv(url)
   downloaded_data[,'DateUTC.br...'] <- gsub('<br />', '',
                                             as.character(downloaded_data[,'DateUTC.br...']))
 }
 ```
+
 
