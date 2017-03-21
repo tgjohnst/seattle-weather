@@ -12,27 +12,65 @@ Load required libraries
 library(lubridate)
 ```
 
-Setup date ranges to search
-```{r}
-
-start_date <- '2015-01-01'
-end_date <- '2017-01-01'
-all_dates <- seq.Date(from=as.Date(startDate),to=as.Date(endDate),by = 1)
-```
-
 Function for retrieving available weather data
 ```{r}
 getCleanDataForDate <- function(stationCode, this_date) {
-  url <- paste0('https://www.wunderground.com/history/airport/',
+  this_url <- paste0('https://www.wunderground.com/history/airport/',
                 stationCode, '/',
                 year(this_date), '/',
                 month(this_date), '/',
                 day(this_date), '/',
                 'DailyHistory.html?format=1')
-  downloaded_data <- read.csv(url)
+  downloaded_data <- read.csv(this_url)
+  if (nrow(downloaded_data) == 1) {
+    return(NA)
+  }
+  if (names(downloaded_data)[1] == 'TimePDT') {
+    downloaded_data['TimeZone'] <- 'PDT'
+    names(downloaded_data)[1] <- 'Time'
+  } else {
+    downloaded_data['TimeZone'] <- 'PST'
+    names(downloaded_data)[1] <- 'Time'
+  }
   downloaded_data[,'DateUTC.br...'] <- gsub('<br />', '',
                                             as.character(downloaded_data[,'DateUTC.br...']))
+  return(downloaded_data)
 }
 ```
 
+Setup date ranges to search
+```{r}
+loc <- 'KSEA'
+start_date <- '2016-11-01'
+end_date <- '2017-02-01'
+all_dates <- seq.Date(from=as.Date(start_date),to=as.Date(end_date),by = 1)
+```
 
+pull data across dates
+```{r}
+all_measures <- getCleanDataForDate(loc, all_dates[1])
+for (i in 2:length(all_dates)) {
+  this_date <- all_dates[i]
+  this_data <- getCleanDataForDate(loc, this_date)
+  print(names(this_data))
+  if (!(is.na(this_data))) {
+    all_measures <- rbind(all_measures, this_data)
+  }
+}
+```
+
+What kinds of conditions do we have
+```{r}
+table(all_measures$conditions)
+
+#What would we call sunny?
+sunny <- c('Clear', 'Partly Cloudy', 'Scattered Clouds')
+
+# Only take the first measurement per hour
+# TODO
+cond_by_hour <- table(all_measures$Conditions, all_measures$hour)
+meas_per_hour <- colSums(cond_by_hour)
+norm_cond_by_hour <- t(apply(cond_by_hour, 1, function(x) x/meas_per_hour))
+colorVec <- ifelse(rownames(norm_cond_by_hour) %in% sunny, 'yellow','grey50')
+barplot(norm_cond_by_hour, col=colorVec)
+```
